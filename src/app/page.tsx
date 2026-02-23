@@ -1,3 +1,4 @@
+import { CursorTrail } from "@/components/CursorTrail";
 import { SetupForm } from "@/components/SetupForm";
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
           Send Fathom meeting action items to a Slack channel. Enter your
           webhook URLs below and use the generated URL in Fathom.
         </p>
+        <CursorTrail />
         <SetupForm />
       </main>
     </div>
