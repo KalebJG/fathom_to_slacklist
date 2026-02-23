@@ -7,6 +7,7 @@ import {
   type FathomMeetingPayload,
 } from "@/lib/fathom-types";
 import { buildSlackPayload } from "@/lib/slack-message";
+import { normalizeSlackWebhookUrl } from "@/lib/slack-webhook";
 
 /** Shape of connection row as selected by this route */
 type WebhookConnectionRow = {
@@ -64,6 +65,13 @@ export async function POST(
     }
   }
 
+  if (rawBody.length > 1_000_000) {
+    return NextResponse.json(
+      { error: "Payload too large" },
+      { status: 413 }
+    );
+  }
+
   let payload: FathomMeetingPayload;
   try {
     payload = JSON.parse(rawBody) as FathomMeetingPayload;
@@ -97,7 +105,12 @@ export async function POST(
   const meeting = getMeetingContext(payload);
   const slackPayload = buildSlackPayload(actionItems, meeting, hasFilter);
 
-  const slackRes = await fetch(connection.slack_webhook_url, {
+  const slackWebhookUrl = normalizeSlackWebhookUrl(connection.slack_webhook_url);
+  if (!slackWebhookUrl) {
+    return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+  }
+
+  const slackRes = await fetch(slackWebhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(slackPayload),

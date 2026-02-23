@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { buildSlackPayload } from "@/lib/slack-message";
+import { normalizeSlackWebhookUrl } from "@/lib/slack-webhook";
 import {
   getActionItems,
   getMeetingContext,
@@ -61,6 +62,11 @@ export async function POST(
     return NextResponse.json({ error: "Connection not found" }, { status: 404 });
   }
 
+  const slackWebhookUrl = normalizeSlackWebhookUrl(connection.slack_webhook_url);
+  if (!slackWebhookUrl) {
+    return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+  }
+
   const hasFilter =
     !!connection.assignee_email_filter?.trim() ||
     !!connection.assignee_name_filter?.trim();
@@ -68,7 +74,7 @@ export async function POST(
   const meeting = getMeetingContext(SAMPLE_FATHOM_PAYLOAD);
   const slackPayload = buildSlackPayload(actionItems, meeting, hasFilter);
 
-  const slackRes = await fetch(connection.slack_webhook_url, {
+  const slackRes = await fetch(slackWebhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(slackPayload),
