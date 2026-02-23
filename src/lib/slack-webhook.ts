@@ -11,7 +11,12 @@ export function normalizeSlackWebhookUrl(input: string): string | null {
 
   if (parsed.protocol !== "https:") return null;
   if (parsed.hostname !== "hooks.slack.com") return null;
-  if (!parsed.pathname.startsWith("/services/")) return null;
+  if (
+    !parsed.pathname.startsWith("/services/") &&
+    !parsed.pathname.startsWith("/triggers/")
+  ) {
+    return null;
+  }
   if (parsed.username || parsed.password) return null;
   if (parsed.search || parsed.hash) return null;
 
