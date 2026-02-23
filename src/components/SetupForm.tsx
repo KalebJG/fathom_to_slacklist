@@ -70,7 +70,7 @@ export function SetupForm() {
         setTestMessage(data.error || "Failed to send test message.");
         return;
       }
-      setTestMessage("Test message sent to Slack.");
+      setTestMessage("Sample Fathom payload sent to Slack.");
     } catch {
       setTestMessage("Network error. Please try again.");
     } finally {
@@ -201,17 +201,22 @@ export function SetupForm() {
               disabled={testLoading}
               className="rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50"
             >
-              {testLoading ? "Sending…" : "Send test message to Slack"}
+              {testLoading ? "Sending…" : "Send sample Fathom payload to Slack"}
             </button>
             {testMessage && (
               <p
-                className={`text-sm ${testMessage.startsWith("Test message sent") ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                className={`text-sm ${testMessage.startsWith("Sample Fathom payload sent") ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
                 role="status"
               >
                 {testMessage}
               </p>
             )}
           </div>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Uses a sample payload shaped like Fathom&apos;s
+            <span className="font-medium"> new meeting content ready</span>
+            webhook so you can verify delivery in Slack first.
+          </p>
           <div className="rounded-md bg-zinc-100 dark:bg-zinc-800 p-4 text-sm text-zinc-700 dark:text-zinc-300">
             <p className="font-medium text-zinc-900 dark:text-zinc-100">
               Setup in Fathom
