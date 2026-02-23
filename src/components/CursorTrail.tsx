@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const STORAGE_KEY = "motion-effects-enabled";
 const MAX_POINTS = 16;
 const LERP = 0.2;
 
@@ -17,11 +16,6 @@ export function CursorTrail() {
   const pointerRef = useRef<Point | null>(null);
   const smoothedRef = useRef<Point | null>(null);
 
-  const [motionEnabled, setMotionEnabled] = useState(() => {
-    if (typeof window === "undefined") return true;
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    return saved === null ? true : saved === "true";
-  });
   const [supportsPointerTrail, setSupportsPointerTrail] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -30,10 +24,6 @@ export function CursorTrail() {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   });
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, String(motionEnabled));
-  }, [motionEnabled]);
 
   useEffect(() => {
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -54,8 +44,8 @@ export function CursorTrail() {
   }, []);
 
   const shouldAnimate = useMemo(
-    () => motionEnabled && supportsPointerTrail && !prefersReducedMotion,
-    [motionEnabled, prefersReducedMotion, supportsPointerTrail],
+    () => supportsPointerTrail && !prefersReducedMotion,
+    [prefersReducedMotion, supportsPointerTrail],
   );
 
   useEffect(() => {
@@ -152,35 +142,5 @@ export function CursorTrail() {
     };
   }, [shouldAnimate]);
 
-  const disabledReason = prefersReducedMotion
-    ? "Disabled by your reduced-motion setting"
-    : !supportsPointerTrail
-      ? "Available on mouse/trackpad devices"
-      : null;
-
-  return (
-    <>
-      <div className="mt-4 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-        <label htmlFor="motion-effects" className="font-medium text-zinc-700 dark:text-zinc-300">
-          Motion effects
-        </label>
-        <input
-          id="motion-effects"
-          type="checkbox"
-          checked={motionEnabled}
-          onChange={(event) => setMotionEnabled(event.target.checked)}
-          className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
-          aria-describedby="motion-effects-note"
-        />
-        <span id="motion-effects-note" className="text-xs">
-          {disabledReason ?? "Cursor trail"}
-        </span>
-      </div>
-      <canvas
-        ref={canvasRef}
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-10"
-      />
-    </>
-  );
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-10" />;
 }
