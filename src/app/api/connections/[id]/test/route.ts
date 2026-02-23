@@ -1,22 +1,44 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { buildSlackPayload } from "@/lib/slack-message";
-import type { FathomActionItem } from "@/lib/fathom-types";
+import {
+  getActionItems,
+  getMeetingContext,
+  type FathomMeetingPayload,
+} from "@/lib/fathom-types";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-const FAKE_ACTION_ITEMS: FathomActionItem[] = [
-  {
-    description: "This is a test action item from Fathom to Slack.",
-    assignee: { name: "Test User", email: null, team: null },
+/**
+ * Sample payload based on Fathom "new meeting content ready" docs.
+ * It lets users validate Slack rendering before wiring a real webhook.
+ */
+const SAMPLE_FATHOM_PAYLOAD: FathomMeetingPayload = {
+  meeting: {
+    meeting_title: "Product sync – Q2 planning",
+    share_url: "https://fathom.video/share/demo-meeting",
+    created_at: "2026-02-20T18:17:00.000Z",
+    action_items: [
+      {
+        description: "Share the updated launch timeline by Friday",
+        assignee: {
+          name: "Avery Kim",
+          email: "avery@example.com",
+          team: "Product",
+        },
+        recording_playback_url: "https://fathom.video/share/demo-meeting?t=14m10s",
+      },
+      {
+        description: "Draft customer FAQ for the onboarding flow",
+        assignee: {
+          name: "Jordan Lee",
+          email: "jordan@example.com",
+          team: "Success",
+        },
+      },
+    ],
   },
-];
-
-const FAKE_MEETING = {
-  title: "Test meeting (Fathom → Slack)",
-  url: null as string | null,
-  created_at: null as string | null,
 };
 
 export async function POST(
@@ -42,11 +64,9 @@ export async function POST(
   const hasFilter =
     !!connection.assignee_email_filter?.trim() ||
     !!connection.assignee_name_filter?.trim();
-  const slackPayload = buildSlackPayload(
-    FAKE_ACTION_ITEMS,
-    FAKE_MEETING,
-    hasFilter
-  );
+  const actionItems = getActionItems(SAMPLE_FATHOM_PAYLOAD);
+  const meeting = getMeetingContext(SAMPLE_FATHOM_PAYLOAD);
+  const slackPayload = buildSlackPayload(actionItems, meeting, hasFilter);
 
   const slackRes = await fetch(connection.slack_webhook_url, {
     method: "POST",
