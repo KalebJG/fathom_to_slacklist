@@ -27,7 +27,10 @@ export async function POST(request: Request) {
 
     if (!slackWebhookUrl) {
       return NextResponse.json(
-        { error: "Slack webhook URL must be a valid https://hooks.slack.com/services/... URL" },
+        {
+          error:
+            "Slack webhook URL must be a valid https://hooks.slack.com/services/... or https://hooks.slack.com/triggers/... URL",
+        },
         { status: 400 }
       );
     }

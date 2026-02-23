@@ -94,12 +94,11 @@ export function SetupForm() {
             required
             value={slackUrl}
             onChange={(e) => setSlackUrl(e.target.value)}
-            placeholder="https://hooks.slack.com/services/..."
+            placeholder="https://hooks.slack.com/services/... or /triggers/..."
             className="mt-1 block w-full rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
           />
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            Create an Incoming Webhook in your Slack workspace and paste the URL
-            here.
+            Paste your Slack Incoming Webhook (/services/...) or Workflow Trigger (/triggers/...) URL here.
           </p>
         </div>
         <div>
