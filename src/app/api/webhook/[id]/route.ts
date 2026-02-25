@@ -6,7 +6,7 @@ import {
   getMeetingContext,
   type FathomMeetingPayload,
 } from "@/lib/fathom-types";
-import { buildSlackPayload } from "@/lib/slack-message";
+import { buildWorkflowPayloads } from "@/lib/slack-message";
 import { normalizeSlackWebhookUrl } from "@/lib/slack-webhook";
 
 /** Shape of connection row as selected by this route */
@@ -103,22 +103,28 @@ export async function POST(
   }
 
   const meeting = getMeetingContext(payload);
-  const slackPayload = buildSlackPayload(actionItems, meeting, hasFilter);
+  const payloads = buildWorkflowPayloads(actionItems, meeting, hasFilter);
 
   const slackWebhookUrl = normalizeSlackWebhookUrl(connection.slack_webhook_url);
   if (!slackWebhookUrl) {
     return NextResponse.json({ error: "Connection not found" }, { status: 404 });
   }
 
-  const slackRes = await fetch(slackWebhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(slackPayload),
-  });
+  const results = await Promise.allSettled(
+    payloads.map((p) =>
+      fetch(slackWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(p),
+      })
+    )
+  );
 
-  if (!slackRes.ok) {
-    const errText = await slackRes.text();
-    console.error("Slack webhook error:", slackRes.status, errText);
+  const failed = results.filter(
+    (r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok)
+  );
+  if (failed.length > 0) {
+    console.error(`Slack webhook: ${failed.length}/${results.length} calls failed`);
     return NextResponse.json(
       { error: "Failed to send to Slack" },
       { status: 502 }

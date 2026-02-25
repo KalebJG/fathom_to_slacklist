@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { buildSlackPayload } from "@/lib/slack-message";
+import { buildWorkflowPayloads } from "@/lib/slack-message";
 import { normalizeSlackWebhookUrl } from "@/lib/slack-webhook";
 import {
   getActionItems,
@@ -72,17 +72,23 @@ export async function POST(
     !!connection.assignee_name_filter?.trim();
   const actionItems = getActionItems(SAMPLE_FATHOM_PAYLOAD);
   const meeting = getMeetingContext(SAMPLE_FATHOM_PAYLOAD);
-  const slackPayload = buildSlackPayload(actionItems, meeting, hasFilter);
+  const payloads = buildWorkflowPayloads(actionItems, meeting, hasFilter);
 
-  const slackRes = await fetch(slackWebhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(slackPayload),
-  });
+  const results = await Promise.allSettled(
+    payloads.map((p) =>
+      fetch(slackWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(p),
+      })
+    )
+  );
 
-  if (!slackRes.ok) {
-    const errText = await slackRes.text();
-    console.error("Slack test webhook error:", slackRes.status, errText);
+  const failed = results.filter(
+    (r) => r.status === "rejected" || (r.status === "fulfilled" && !r.value.ok)
+  );
+  if (failed.length > 0) {
+    console.error(`Slack test webhook: ${failed.length}/${results.length} calls failed`);
     return NextResponse.json(
       { error: "Failed to send to Slack" },
       { status: 502 }
